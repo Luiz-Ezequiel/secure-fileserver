@@ -8,7 +8,7 @@
 ## Fase 2 – Criptografia
 - [ ] Implementar AES ([Guia](https://gocloud.dev/howto/crypto/encrypt/))
 - [ ] Implementar ChaCha20 ([Exemplo](https://pkg.go.dev/golang.org/x/crypto/chacha20))
-- [ ] Implementar DES (ou outro algoritmo didático) ([DES em Go](https://golang.org/pkg/crypto/des/))
+- [x] Implementar DES (ou outro algoritmo didático) ([DES em Go](https://golang.org/pkg/crypto/des/))
 - [ ] Troca de chaves com DH ([RFC 3526](https://datatracker.ietf.org/doc/html/rfc3526))
 - [ ] Troca de chaves com PKI ([Tutorial de RSA](https://blog.cloudflare.com/a-relatively-easy-to-understand-primer-on-public-key-encryption/))
 
