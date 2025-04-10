@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"crypto/aes"
 	"crypto/cipher"
 	"crypto/des"
 	"crypto/rand"
@@ -17,7 +18,7 @@ type EncryptionHandler interface {
 type DESHandler struct {
 }
 
-func (crypt DESHandler) Encrypt(plaintext, key []byte) (ciphertext []byte, err error){
+func (crypt DESHandler) Encrypt(plaintext, key []byte) (ciphertext []byte, err error) {
 	// Cria um bloco de cifra com a chave fornecida
 	block, err := des.NewCipher(key)
 	if err != nil {
@@ -33,14 +34,14 @@ func (crypt DESHandler) Encrypt(plaintext, key []byte) (ciphertext []byte, err e
 		return nil, err
 	}
 	
-	mode := cipher.NewCBCEncrypter(block, iv)
+	mode := cipher.NewCBCEncrypter(block, iv) 		// Cria um encriptador no modo CBC
 	ciphertext = make([]byte, len(plaintext))
 	mode.CryptBlocks(ciphertext, plaintext) 		// Executa a criptografia em blocos
 	
 	return append(iv, ciphertext...), nil 			// Retorna o IV concatenado com o dado criptografado
 }
 
-func (crypt DESHandler) Decrypt(ciphertext, key []byte) (text []byte, err error){
+func (crypt DESHandler) Decrypt(ciphertext, key []byte) (text []byte, err error) {
 	// Cria o bloco de cifra com a chave fornecida
 	block, err := des.NewCipher(key)
 	if err != nil {
@@ -54,7 +55,7 @@ func (crypt DESHandler) Decrypt(ciphertext, key []byte) (text []byte, err error)
 	iv := ciphertext[:des.BlockSize] 
 	ciphertext = ciphertext[des.BlockSize:]
 
-	if len(ciphertext)%des.BlockSize != 0 {
+	if len(ciphertext) % des.BlockSize != 0 {
 		return nil, errors.New("ciphertext não é um múltiplo do tamanho do bloco")
 	}
 
@@ -96,12 +97,61 @@ func pkcs7Unpad(data []byte, blockSize int) ([]byte, error) {
 }
 
 
-// type AESHandler struct {
-// }
+type AESHandler struct {
+}
 
-// func (crypt AESHandler) Encrypt(key, text []byte) (ciphertext []byte, err error){
+func (crypt AESHandler) Encrypt(text, key []byte) (ciphertext []byte, err error) {
+	// Cria um bloco de cifra com a chave fornecida
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
 
-// }
+	// Cria um encriptador no modo GCM
+	aesgcm, err := cipher.NewGCM(block) 		
+	if err != nil {
+		return nil, err
+	}
+
+	// Cria um nonce(number used once). Num aleatório para criptografar, fazendo cada criptografia única 
+	nonce := make([]byte, 12)					// 12 bytes é o tamanho recomendado para GCM (96 bits) garante performance otimizada e está de acordo com os padrões do NIST
+	if _, err := rand.Read(nonce); err != nil {
+		return nil, err
+	}
+	
+	// Executa a criptografia do texto
+	ciphertext = aesgcm.Seal(nil, nonce, text, nil)
+	return append(nonce, ciphertext...), nil
+
+}
+
+func (crypt AESHandler) Decrypt(ciphertext, key []byte) (text []byte, err error){
+	// Cria um bloco de cifra com a chave fornecida
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+
+	// Cria um encriptador no modo GCM
+	aesgcm, err := cipher.NewGCM(block)			
+	if err != nil {
+		return nil, err
+	}
+
+	// Separa o nonce do texto criptografado
+	if len(ciphertext) < 12 {
+		return nil, errors.New("ciphertext muito curto")
+	}
+	nonce := ciphertext[:12] 		 
+	ciphertext = ciphertext[12:]
+
+	// Executa a descriptografia do texto criptografado
+	text, err = aesgcm.Open(nil, nonce, ciphertext, nil)
+	if err != nil {
+		return nil, err
+	}
+	return text, nil
+}
 
 // func main() {
 
