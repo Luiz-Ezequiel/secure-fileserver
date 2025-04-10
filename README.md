@@ -9,7 +9,7 @@ Defini a estrutura de forma que o código se mantenha organizado, mas não tão 
 ├── internal/
 │   ├── core/              # Núcleo do sistema
 │   │   ├── crypto/.go     # Toda criptografia
-│   │   │   ├── main.go    # Toda criptografia
+│   │   │   ├── handler.go # Interfaces e funções auxiliares
 │   │   │   ├── aes.go     # Algoritmo Simétrico AES
 │   │   │   ├── *.go       # Algoritmo Simétrico *
 │   │   │   └── des.go     # Algoritmo Simétrico DES
@@ -32,20 +32,46 @@ Defini a estrutura de forma que o código se mantenha organizado, mas não tão 
 
 ## Algoritmos de Criptografia Simétrica
 
-Começo definindo uma interface de tratamento de criptografia (`EncryptionHandler`) que será a interface de todos os 3 algoritmos de criptografia. 
+O sistema é baseado em uma interface chamada `EncryptionHandler`, que define a estrutura comum para todos os algoritmos de criptografia simétrica utilizados no projeto.
 
-**Métodos:**
+### ✨ Interface: `EncryptionHandler` (definida em `handler.go`)
+A interface garante que qualquer algoritmo implementado terá os seguintes métodos:
 
-    - Encrypt: Criptografa dados brutos (plaintext) com uma chave.
-    - Decrypy: Decriptografa dados criptografados (ciphertext) com a mesma chave.
+- `Encrypt(plaintext []byte, key []byte) ([]byte, error)`:  
+  Criptografa dados brutos (plaintext) utilizando uma chave simétrica.
+  
+- `Decrypt(ciphertext []byte, key []byte) ([]byte, error)`:  
+  Decriptografa os dados criptografados (ciphertext) usando a mesma chave.
 
-### DES (Data Encryption Standard)
-Considerado insecuro para aplicações modernas pois o tamanho da chave possui apenas 56 bits, fazendo com que ele seja suscetível a ataques de força-bruta, utilizado somente para didática. A chave deve ter 8 bytes e o IV deve ser aleatório e diferente a cada execução para garantir a segurança.
+Além disso, esse arquivo define funções auxiliares genéricas usado pelos algoritmos.
 
-A estrutura DESHandler implementa a interface EncryptionHandler usando o algoritmo DES com as seguintes características:
+---
 
-    Tamanho fixo de bloco: 8 bytes (64 bits)
+### 🧱 DES (Data Encryption Standard) – `des.go`
 
-    Modo de operação: CBC (Cipher Block Chaining)
+> **⚠️ Importante:** O DES é considerado inseguro para aplicações modernas, pois utiliza uma chave de apenas 56 bits, tornando-o vulnerável a ataques de força bruta. 
 
-    Padding: PKCS#7
+**Características da implementação:**
+
+- **Tamanho do bloco:** 8 bytes (64 bits)  
+- **Modo de operação:** CBC (Cipher Block Chaining)  
+- **Padding:** PKCS#7  
+- **IV (Vetor de Inicialização):** Gerado aleatoriamente a cada criptografia  
+- **Tamanho da chave:** 8 bytes (64 bits)
+
+**Resumo:**  
+Cada mensagem é preenchida com padding para se adequar ao tamanho de bloco do DES, então criptografada usando o modo CBC. O IV é concatenado ao início do ciphertext para permitir a decriptação posterior.
+
+---
+
+### 🧬 AES (Advanced Encryption Standard) – `aes.go`
+
+> O AES é atualmente o padrão mais utilizado e recomendado para criptografia simétrica segura.
+
+**Características da implementação:**
+
+- **Tamanho do bloco:** 16 bytes (128 bits)  
+- **Modo de operação:** GCM (Galois/Counter Mode) – fornece confidencialidade e integridade  
+- **Padding:** **Não necessário** (modo GCM funciona como um stream cipher)  
+- **Nonce (Número usado somente uma vez):** 12 bytes (96 bits), gerado aleatoriamente a cada execução (recomendado pelo NIST)  
+- **Tamanho da chave:** geralmente 16, 24 ou 32 bytes (128, 192 ou 256 bits)
