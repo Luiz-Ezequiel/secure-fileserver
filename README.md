@@ -49,7 +49,7 @@ Além disso, esse arquivo define funções auxiliares genéricas usado pelos alg
 
 ### DES (Data Encryption Standard) – `des.go`
 
-> ** Importante:** O DES é considerado inseguro para aplicações modernas, pois utiliza uma chave de apenas 56 bits, tornando-o vulnerável a ataques de força bruta. 
+> **Importante:** O DES é considerado inseguro para aplicações modernas, pois utiliza uma chave de apenas 56 bits, tornando-o vulnerável a ataques de força bruta. 
 
 **Características da implementação:**
 
@@ -92,4 +92,5 @@ Cada mensagem é preenchida com padding para se adequar ao tamanho de bloco do D
 
 **Resumo:**  
 É gerado um nonce aleatório de 24 bytes. Os primeiros 16 bytes são usados com a chave original para derivar uma subchave segura via HChaCha20. A cifra ChaCha20 então usa os últimos 8 bytes do nonce e essa subchave para encriptar o plaintext. O nonce completo é concatenado ao inicio do ciphertext para permitir a decriptação posterior.
+
 ---
