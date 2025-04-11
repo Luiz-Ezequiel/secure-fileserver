@@ -2,6 +2,7 @@ package crypto
 
 import (
 	"bytes"
+	"crypto/rand"
 	"errors"
 )
 
@@ -39,4 +40,13 @@ func pkcs7Unpad(data []byte, blockSize int) ([]byte, error) {
 	}
 	
 	return data[:len(data)-paddingLen], nil 		// Remove os bytes de padding e retorna os dados originais
+}
+
+func createNonce(size int) (nonce []byte, err error) {
+	// Cria um nonce(number used once). Num aleatório para criptografar, fazendo cada criptografia única 
+	nonce = make([]byte, size)					
+	if _, err := rand.Read(nonce); err != nil {
+		return nil, err
+	}
+	return nonce, nil
 }
