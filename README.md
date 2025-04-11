@@ -34,7 +34,7 @@ Defini a estrutura de forma que o código se mantenha organizado, mas não tão 
 
 O sistema é baseado em uma interface chamada `EncryptionHandler`, que define a estrutura comum para todos os algoritmos de criptografia simétrica utilizados no projeto.
 
-### ✨ Interface: `EncryptionHandler` (definida em `handler.go`)
+### Interface: `EncryptionHandler` (definida em `handler.go`)
 A interface garante que qualquer algoritmo implementado terá os seguintes métodos:
 
 - `Encrypt(plaintext []byte, key []byte) ([]byte, error)`:  
@@ -47,9 +47,9 @@ Além disso, esse arquivo define funções auxiliares genéricas usado pelos alg
 
 ---
 
-### 🧱 DES (Data Encryption Standard) – `des.go`
+### DES (Data Encryption Standard) – `des.go`
 
-> **⚠️ Importante:** O DES é considerado inseguro para aplicações modernas, pois utiliza uma chave de apenas 56 bits, tornando-o vulnerável a ataques de força bruta. 
+> ** Importante:** O DES é considerado inseguro para aplicações modernas, pois utiliza uma chave de apenas 56 bits, tornando-o vulnerável a ataques de força bruta. 
 
 **Características da implementação:**
 
@@ -64,7 +64,7 @@ Cada mensagem é preenchida com padding para se adequar ao tamanho de bloco do D
 
 ---
 
-### 🧬 AES (Advanced Encryption Standard) – `aes.go`
+### AES (Advanced Encryption Standard) – `aes.go`
 
 > O AES é atualmente o padrão mais utilizado e recomendado para criptografia simétrica segura.
 
@@ -75,3 +75,21 @@ Cada mensagem é preenchida com padding para se adequar ao tamanho de bloco do D
 - **Padding:** **Não necessário** (modo GCM funciona como um stream cipher)  
 - **Nonce (Número usado somente uma vez):** 12 bytes (96 bits), gerado aleatoriamente a cada execução (recomendado pelo NIST)  
 - **Tamanho da chave:** geralmente 16, 24 ou 32 bytes (128, 192 ou 256 bits)
+
+### ChaCha20 (com XChaCha20) - `chacha20.go`
+
+> ChaCha20 é um algoritmo moderno de criptografia simétrica baseado em stream cipher, conhecido por sua performance, segurança e resistência a falhas de implementação, especialmente com relação à reutilização de nonces.
+
+**Características da implementação:**
+
+- **Tipo de cifra:** Stream cipher (não usa blocos fixos)  
+- **Modo utilizado:** XChaCha20 (usa HChaCha20 + ChaCha20)
+- **Padding:** **Não necessário** (como é um stream cipher, não exige preenchimento)
+- **Nonce:** 24 bytes (192 bits), sendo:
+  - Os primeiros 16 bytes usados para derivar uma subchave com `HChaCha20`
+  - Os últimos 8 bytes usados como nonce final na cifra `ChaCha20`
+- **Tamanho da chave:** 32 bytes (256 bits)
+
+**Resumo:**  
+É gerado um nonce aleatório de 24 bytes. Os primeiros 16 bytes são usados com a chave original para derivar uma subchave segura via HChaCha20. A cifra ChaCha20 então usa os últimos 8 bytes do nonce e essa subchave para encriptar o plaintext. O nonce completo é concatenado ao inicio do ciphertext para permitir a decriptação posterior.
+---
