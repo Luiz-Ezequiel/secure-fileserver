@@ -23,7 +23,6 @@ func (crypt AESHandler) Encrypt(plaintext, key []byte) (ciphertext []byte, err e
 		return nil, err
 	}
 
-	// Cria um nonce(number used once). Num aleatório para criptografar, fazendo cada criptografia única 
 	nonce, err := createNonce(12) // 12 bytes é o tamanho recomendado para GCM (96 bits) garante performance otimizada e está de acordo com os padrões do NIST
 	if err != nil {
 		return nil, err
