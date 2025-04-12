@@ -11,6 +11,10 @@ type EncryptionHandler interface {
 	Decrypt(ciphertext []byte, key []byte) ([]byte, error)
 }
 
+type KeyGenerator interface	{
+	Generate() ([]byte, error)
+}
+
 // Função auxiliar para aplicar o padding PKCS#7
 func pkcs7pad(data []byte, blockSize int) []byte {
 	padding := blockSize - len(data)%blockSize

@@ -8,7 +8,7 @@ Defini a estrutura de forma que o código se mantenha organizado, mas não tão 
 │   └── client/            # Cliente CLI básico
 ├── internal/
 │   ├── core/              # Núcleo do sistema
-│   │   ├── crypto/.go     # Toda criptografia
+│   │   ├── crypto/     # Toda criptografia
 │   │   │   ├── handler.go # Interfaces e funções auxiliares
 │   │   │   ├── aes.go     # Algoritmo Simétrico AES
 │   │   │   ├── *.go       # Algoritmo Simétrico *
