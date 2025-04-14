@@ -11,11 +11,12 @@ Defini a estrutura de forma que o código se mantenha organizado, mas não tão 
 │   │   ├── crypto/     # Toda criptografia
 │   │   │   ├── handler.go # Interfaces e funções auxiliares
 │   │   │   ├── aes.go     # Algoritmo Simétrico AES
-│   │   │   ├── *.go       # Algoritmo Simétrico *
-│   │   │   └── des.go     # Algoritmo Simétrico DES
+│   │   │   ├── cha20.go   # Algoritmo Simétrico ChaCha20
+│   │   │   ├── des.go     # Algoritmo Simétrico DES
+│   │   │   └── keygen.go  # Geração de chave
 │   │   ├── auth.go        # Autenticação
 │   │   └── storage.go     # Armazenamento
-│   ├── protocol/          # Protocolos de comunicação
+│   ├── server/          # Protocolos de comunicação
 │   │   ├── socket.go      # Socket seguro
 │   │   └── websocket.go   # WS opcional
 │   └── api/               # Handlers
