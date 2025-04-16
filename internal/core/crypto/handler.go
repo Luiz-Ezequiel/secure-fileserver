@@ -2,6 +2,7 @@ package crypto
 
 import (
 	"bytes"
+	"crypto/ecdh"
 	"crypto/rand"
 	"errors"
 )
@@ -53,4 +54,12 @@ func createNonce(size int) (nonce []byte, err error) {
 		return nil, err
 	}
 	return nonce, nil
+}
+
+func MarshalPublicKey(pub *ecdh.PublicKey) ([]byte) {
+	return pub.Bytes()
+}
+
+func UnmarshalPublicKey(data []byte) (*ecdh.PublicKey, error) {
+	return ecdh.P256().NewPublicKey(data)
 }

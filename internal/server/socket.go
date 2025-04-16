@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"secure-fileserver/internal/core/crypto"
 )
 
 type Message struct {
@@ -59,7 +60,41 @@ func (s *Server) acceptLoop() {
 
 func (s *Server) readLoop(conn net.Conn) {
 	defer conn.Close()
-	buf := make([]byte, 2048)
+
+	keyPair, err := crypto.GenerateKeyPair()
+	if err != nil {
+		fmt.Println("Key generation failed:", err)
+		return
+	}
+	
+	serverPubBytes := crypto.MarshalPublicKey(keyPair.Public)
+	if _, err := conn.Write(serverPubBytes); err != nil {
+		log.Println("Error sending public key to client:", err)
+		return
+	}
+
+	clientPubBytes := make([]byte, 65)
+	if _, err := io.ReadFull(conn, clientPubBytes); err != nil {
+		log.Println("Error receiving client's public key:", err)
+		return
+	}
+
+	clientPubKey, err := crypto.UnmarshalPublicKey(clientPubBytes)
+	if err != nil {
+		log.Println("Invalid client public key:", err)
+		return
+	}
+
+	sharedSecret, err := crypto.DeriveSharedSecret(keyPair.Private, clientPubKey)
+	if err != nil {
+		log.Println("Failed to derive shared secret:", err)
+		return
+	}
+	log.Println("Secure connection established with", conn.RemoteAddr())
+
+	var handler crypto.EncryptionHandler = crypto.AESHandler{}
+
+	buf := make([]byte, 4096)
 	for {
 		n, err := conn.Read(buf)
 		if err != nil {
@@ -70,12 +105,25 @@ func (s *Server) readLoop(conn net.Conn) {
 			continue
 		}
 
-		s.msgCh <- Message{
-			from:    conn.RemoteAddr().String(),
-			payload: buf[:n],
+		plaintext, err := handler.Decrypt(buf[:n], sharedSecret)
+		if err != nil {
+			log.Println("Decryption failed:", err)
+			continue
 		}
 
-		conn.Write([]byte("Thanks for sending stuff\n"))
+		s.msgCh <- Message{
+			from:    conn.RemoteAddr().String(),
+			payload: plaintext,
+		}
+
+		response := []byte("Thanks for sending stuff\n")
+		ciphertext, err := handler.Encrypt(response, sharedSecret)
+		if err != nil {
+			log.Println("Encryption failed:", err)
+			continue
+		}
+
+		conn.Write(ciphertext)
 	}
 }
 
