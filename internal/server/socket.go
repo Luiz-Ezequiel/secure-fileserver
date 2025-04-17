@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"os"
 	"secure-fileserver/internal/core/crypto"
 )
 
@@ -16,13 +17,21 @@ type Message struct {
 type Server struct {
 	listenAddr string
 	ln         net.Listener
+	certPEM    []byte
 	quitCh     chan struct{}
 	msgCh      chan Message
 }
 
 func NewServer(listenAddr string) *Server {
+	// Lê o certificado e envia para o cliente
+	certPEM, err := os.ReadFile("certs/server.crt")
+	if err != nil {
+		log.Fatal("failed to load server cert: %w", err)
+	}
+
 	return &Server{
 		listenAddr: listenAddr,
+		certPEM:    certPEM,
 		quitCh:     make(chan struct{}),
 		msgCh:      make(chan Message, 10),
 	}
@@ -60,7 +69,7 @@ func (s *Server) acceptLoop() {
 func (s *Server) handleClient(conn net.Conn) {
 	defer conn.Close()
 
-	sharedSecret, err := performHandshake(conn)
+	sharedSecret, err := s.performHandshake(conn)
 	if err != nil {
 		log.Println("Handshake failed with", conn.RemoteAddr(), ":", err)
 		return
@@ -71,36 +80,41 @@ func (s *Server) handleClient(conn net.Conn) {
 	s.handleClientComunication(conn, sharedSecret)
 }
 
-func performHandshake(conn net.Conn) ([]byte, error) {
+func (s *Server) performHandshake(conn net.Conn) ([]byte, error) {
+	// Envia o certificado para o cliente
+	if _, err := conn.Write(s.certPEM); err != nil {
+		return nil, fmt.Errorf("failed to send cert: %w", err)
+	}
+
 	// Gera o par de chaves do servidor
 	keyPair, err := crypto.GenerateKeyPair()
 	if err != nil {
 		return nil, fmt.Errorf("Key generation failed: %w", err)
 	}
-	
+
 	// Envia a chave publica do servidor
 	serverPubBytes := crypto.MarshalPublicKey(keyPair.Public)
 	if _, err := conn.Write(serverPubBytes); err != nil {
 		return nil, fmt.Errorf("Error sending public key to client: %w", err)
 	}
-	
+
 	// Recebe a chave publica do cliente
 	clientPubBytes := make([]byte, 65)
 	if _, err := io.ReadFull(conn, clientPubBytes); err != nil {
 		return nil, fmt.Errorf("Error reading client's public key: %w", err)
 	}
-	
+
 	clientPubKey, err := crypto.UnmarshalPublicKey(clientPubBytes)
 	if err != nil {
 		return nil, fmt.Errorf("Invalid client public key: %w", err)
 	}
-	
+
 	// Deriva o secredo compartilhado
 	sharedSecret, err := crypto.DeriveSharedSecret(keyPair.Private, clientPubKey)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to derive shared secret: %w", err)
 	}
-	
+
 	return sharedSecret, nil
 }
 
